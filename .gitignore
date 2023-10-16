@@ -1,3 +1,5 @@
 genesis/node_modules
 clusterNode
 test-contract/deploy-token/node_modules
+bin/bootnode
+bin/geth

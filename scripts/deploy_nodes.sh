@@ -95,7 +95,7 @@ function prepareGethEnv(){
 function generateGenesis(){
     rm ${workspace}/genesis/validators.conf
     num=$1
-
+    
     for i in "${validatorAddr[@]}"
     do
        echo "${i}" >> ${workspace}/genesis/validators.conf
@@ -114,11 +114,10 @@ function generateGenesis(){
     done
 }
 
-function startFullNodeWithExpiry() {
+function startFullNode() {
     num=$1
     nodeNum=$2
     bootnode=$3
-    remote=$4
     for((i=1;i<=$num;i++)); do
         validatorIndex=$(($nodeNum-1))
         nohup ${workspace}/bin/geth -unlock ${validatorAddr[$validatorIndex]} --http --http.port "$((8501+$nodeNum))" --ws.port "$((8545+$nodeNum))" \
@@ -127,17 +126,16 @@ function startFullNodeWithExpiry() {
          --port "$((30305+$nodeNum))" --authrpc.port "$((8550+$nodeNum))" --password "${workspace}/clusterNode/password.txt" \
          --mine --miner.etherbase ${validatorAddr[$validatorIndex]} --rpc.allow-unprotected-txs --allow-insecure-unlock --light.serve 50 \
          --gcmode full --ws --datadir ${workspace}/clusterNode/node${nodeNum} \
-         --metrics --pprof --pprof.port "$((6060+$nodeNum))" --http.corsdomain "*" --rpc.txfeecap 0 \
-         --state-expiry --state-expiry.remote ${remote} > ${workspace}/clusterNode/node${nodeNum}/geth.log 2>&1 &
+         --metrics --pprof --pprof.port "$((6060+$nodeNum))" --http.corsdomain "https://remix.ethereum.org" > ${workspace}/clusterNode/node${nodeNum}/geth.log 2>&1 &
 
-        echo "start validator $nodeNum as full node, enable state expiry feature"
+        echo "start validator $nodeNum as full node"
         nodeNum=$(($nodeNum+1))
 
         sleep 1
     done
 }
 
-function startFullNodeNoExpiry() {
+function startArchiveNode() {
     num=$1
     nodeNum=$2
     bootnode=$3
@@ -148,8 +146,8 @@ function startFullNodeNoExpiry() {
          --syncmode "full" --config ${workspace}/clusterNode/node${nodeNum}/config.toml \
          --port "$((30305+$nodeNum))" --authrpc.port "$((8550+$nodeNum))" --password "${workspace}/clusterNode/password.txt" \
          --mine --miner.etherbase ${validatorAddr[$validatorIndex]} --rpc.allow-unprotected-txs --allow-insecure-unlock --light.serve 50 \
-         --gcmode full --ws --datadir ${workspace}/clusterNode/node${nodeNum} --rpc.txfeecap 0 \
-         --metrics --pprof --pprof.port "$((6060+$nodeNum))" --http.corsdomain "*" > ${workspace}/clusterNode/node${nodeNum}/geth.log 2>&1 &
+         --gcmode archive --ws --datadir ${workspace}/clusterNode/node${nodeNum} \
+         --metrics --pprof --pprof.port "$((6060+$nodeNum))" --http.corsdomain "https://remix.ethereum.org" > ${workspace}/clusterNode/node${nodeNum}/geth.log 2>&1 &
 
         echo "start validator $nodeNum as full node"
         nodeNum=$(($nodeNum+1))
@@ -163,15 +161,15 @@ case ${CMD} in
 start)
     source ~/.bash_profile
     exit_previous
-    fullNumWithExpiry=2
+    fullNum=2
     if [ ! -z $3 ] && [ "$3" -gt "0" ]; then
-      fullNumWithExpiry=$3
+      fullNum=$3
     fi
-    fullNumNoExpiry=1
+    archiveNum=1
     if [ ! -z $4 ] && [ "$4" -gt "0" ]; then
-      fullNumNoExpiry=$4
+      archiveNum=$4
     fi
-    validatorNum=fullNumWithExpiry+fullNumNoExpiry
+    validatorNum=fullNum+archiveNum
     echo "===== generate node key ===="
     generate_nodekey $validatorNum
     echo "===== preparing ===="
@@ -182,9 +180,8 @@ start)
     echo "===== starting bootnode ===="
     bootnode=$(start_bootnode)
     echo "===== starting client ===="
-    startFullNodeNoExpiry fullNumNoExpiry 1 $bootnode # By default, last node is remoteDB
-    remote="http://127.0.0.1:$((8501+1))"
-    startFullNodeWithExpiry fullNumWithExpiry $((fullNumNoExpiry+1)) $bootnode $remote
+    startArchiveNode archiveNum $((fullNum+1)) $bootnode # By default, last node is remoteDB
+    startFullNode fullNum 1 $bootnode
     echo "Finish deploy"
     ;;
 stop)

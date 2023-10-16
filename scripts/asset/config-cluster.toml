@@ -1,2 +1,16 @@
+[Eth]
+NetworkId = 123454321
+SyncMode = "full"
+NoPruning = false
+NoPrefetch = false
+LightPeers = 100
+DatabaseCache = 512
+DatabaseFreezer = ""
+TrieCleanCache = 256
+TrieDirtyCache = 256
+TrieTimeout = 3600000000000
+EnablePreimageRecording = false
+
+
 [Node.P2P]
 StaticNodes = [{{StaticNodes}}]

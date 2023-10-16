@@ -14,9 +14,13 @@
       "londonBlock": 0,
       "arrowGlacierBlock": 0,
       "grayGlacierBlock": 0,
+      "verkleTime": 0,
+      "stateExpiryFork1": 10,
+      "stateExpiryFork2": 20,
       "clique": {
         "period": 5,
-        "epoch": 30000
+        "epoch": 30000,
+        "stateEpochPeriod": 10
       }
     },
     "difficulty": "1",
@@ -30,6 +34,5 @@
       "{{ v.address.replace('0x', '') }}": {
         "balance": "0x{{ v.balance }}"
       }{% endfor %}}
-    }
-  }
+}
   
